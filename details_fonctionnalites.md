@@ -43,6 +43,24 @@ Choix cle: combiner Spring Data Neo4j pour les operations standards et Neo4jClie
 
 ## 3. Modele de donnees graphe
 
+### 3.0 Schema visuel (graphe)
+
+```mermaid
+flowchart LR
+   C[Candidate]
+   S[Skill]
+   J[Job]
+   CO[Company]
+   L[Location]
+   SS[SoftSkill]
+
+   C -- HAS_SKILL --> S
+   J -- REQUIRES --> S
+   CO -- POSTED --> J
+   J -- LOCATED_IN --> L
+   C -- POSSESSES_SOFT_SKILL --> SS
+```
+
 ### 3.1 Noeuds principaux
 
 - Candidate: id, name, email, resumePath

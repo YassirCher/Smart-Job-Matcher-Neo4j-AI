@@ -31,23 +31,31 @@ Le graphe metier tourne a grande echelle avec:
 - plus de 1 000 000 de noeuds
 - environ 4 300 000 relations
 
-Schema logique principal:
+Schema logique principal (rendu graphe GitHub Mermaid):
 
 ```mermaid
-graph LR
-	Candidate[Candidate]
-	Skill[Skill\nname, embedding[384]]
-	Job[Job\njob_link, title, type, level]
-	Company[Company]
-	Location[Location]
-	SoftSkill[SoftSkill]
+flowchart LR
+    C[Candidate]
+    S[Skill]
+    J[Job]
+    CO[Company]
+    L[Location]
+    SS[SoftSkill]
 
-	Candidate -->|HAS_SKILL| Skill
-	Job -->|REQUIRES| Skill
-	Company -->|POSTED| Job
-	Job -->|LOCATED_IN| Location
-	Candidate -->|POSSESSES_SOFT_SKILL\nconfidence, evidence, source| SoftSkill
+    C -- HAS_SKILL --> S
+    J -- REQUIRES --> S
+    CO -- POSTED --> J
+    J -- LOCATED_IN --> L
+    C -- POSSESSES_SOFT_SKILL --> SS
 ```
+
+Proprietes principales:
+
+- Candidate: `id`, `name`, `email`, `resumePath`
+- Skill: `id`, `name`, `embedding[384]`
+- Job: `job_link`, `title`, `type`, `level`
+- SoftSkill: `id`, `name`
+- POSSESSES_SOFT_SKILL: `confidence`, `evidence`, `source`, `updatedAtEpochMs`
 
 Relations cles exploitees par les modules IA/analytics:
 
