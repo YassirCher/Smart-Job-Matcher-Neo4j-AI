@@ -1,0 +1,34 @@
+.graph-page {
+	animation: graphIn 300ms ease;
+}
+
+.graph-card {
+	background: linear-gradient(180deg, #ffffff 0%, #f7fbff 100%);
+}
+
+.graph-legend-row {
+	flex-wrap: wrap;
+	gap: 0.45rem;
+}
+
+.graph-legend-row .badge {
+	border: 1px solid rgba(24, 72, 110, 0.12);
+}
+
+.graph-canvas {
+	background: radial-gradient(circle at 50% 40%, #f9fbff 0%, #edf4fb 100%) !important;
+	border: 1px solid #d2dfef !important;
+	border-radius: 14px !important;
+	box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.65);
+}
+
+@keyframes graphIn {
+	from {
+		opacity: 0;
+		transform: translateY(8px);
+	}
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
+}

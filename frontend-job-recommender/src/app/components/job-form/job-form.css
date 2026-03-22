@@ -1,0 +1,89 @@
+.job-form-page {
+	animation: jobFormIn 320ms ease;
+}
+
+.job-form-header h2 {
+	font-weight: 800;
+	color: #143b66;
+}
+
+.form-mode-badge {
+	font-size: 0.78rem;
+	font-weight: 700;
+	padding: 0.45rem 0.7rem;
+	border-radius: 999px;
+	letter-spacing: 0.01em;
+}
+
+.form-mode-badge.editing {
+	background: #e9f4ff;
+	color: #14508c;
+	border: 1px solid #c7ddf6;
+}
+
+.form-mode-badge.creating {
+	background: #eefaf2;
+	color: #1b6a3f;
+	border: 1px solid #cdebd7;
+}
+
+.job-form-card {
+	background: linear-gradient(180deg, #ffffff 0%, #f7fbff 100%);
+	border: 1px solid #dce6f2 !important;
+	border-radius: 14px;
+}
+
+.magic-fill-box {
+	border: 1px solid #cfe0f6;
+	background:
+		radial-gradient(circle at 85% 10%, rgba(47, 174, 199, 0.16), transparent 34%),
+		linear-gradient(130deg, #f8fbff 0%, #eef6ff 100%);
+	border-radius: 14px;
+	padding: 16px;
+}
+
+.magic-fill-box h5 {
+	font-weight: 800;
+	color: #123a66;
+}
+
+.suggestion-list {
+	border-radius: 12px;
+	border: 1px solid #d4e2f2;
+}
+
+.suggestion-list .list-group-item:hover {
+	background: #f2f8ff;
+}
+
+.selected-skill-box {
+	border-color: #d7e4f3 !important;
+	background: linear-gradient(180deg, #f8fbff 0%, #f0f6fd 100%) !important;
+}
+
+.selected-skill-box .badge.bg-dark {
+	background: linear-gradient(135deg, #0f2b46 0%, #20567d 100%) !important;
+}
+
+.evidence-hint {
+	margin-top: 6px;
+	font-size: 0.84rem;
+	color: #205d9a;
+	line-height: 1.25;
+}
+
+.form-actions .btn {
+	min-width: 168px;
+	font-weight: 600;
+}
+
+@keyframes jobFormIn {
+	from {
+		opacity: 0;
+		transform: translateY(8px);
+	}
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
+}

@@ -1,0 +1,451 @@
+<div class="candidate-profile-page container mt-4">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>Profil: <span class="text-primary">{{ candidate?.name || 'Chargement...' }}</span></h2>
+    <a routerLink="/candidates" class="btn btn-outline-secondary">Retour</a>
+  </div>
+
+  <div class="alert alert-info" *ngIf="isCandidateLoading">
+    Chargement du profil candidat...
+  </div>
+
+  <div class="alert alert-warning" *ngIf="candidateLoadError">
+    {{ candidateLoadError }}
+  </div>
+
+  <div class="card shadow-sm border-0 p-3 mb-4 portfolio-intel-card">
+    <div class="d-flex justify-content-between align-items-start mb-2">
+      <div>
+        <h5 class="mb-1">Resume &amp; Portfolio Intelligence</h5>
+        <p class="small text-muted mb-0">
+          Upload CV + extraction skills IA + detection GitHub + Delta analysis + validation humaine avant ecriture Neo4j.
+        </p>
+      </div>
+      <span class="badge text-bg-dark">Killer Feature</span>
+    </div>
+
+    <div
+      class="resume-dropzone mt-2"
+      [ngClass]="{ 'drag-over': isResumeDragOver }"
+      (dragover)="onResumeDragOver($event)"
+      (dragleave)="onResumeDragLeave($event)"
+      (drop)="onResumeDrop($event)">
+      <div class="resume-dropzone-title">Glissez-deposez votre CV (PDF, DOC, DOCX)</div>
+      <div class="small text-muted mb-2">ou selectionnez un fichier manuellement</div>
+      <input type="file" accept=".pdf,.doc,.docx" class="form-control" (change)="onResumeFileInputChange($event)">
+      <div class="small mt-2" *ngIf="resumeFile">Fichier: {{ resumeFile.name }}</div>
+    </div>
+
+    <div class="d-flex flex-wrap align-items-center gap-3 mt-3">
+      <div class="form-check form-switch">
+        <input class="form-check-input" type="checkbox" id="autoGitHubAfterCv" [(ngModel)]="autoAnalyzeGithubAfterCv">
+        <label class="form-check-label small" for="autoGitHubAfterCv">Analyser GitHub automatiquement apres extraction CV</label>
+      </div>
+
+      <button class="btn btn-dark" (click)="startResumePortfolioAnalysis()" [disabled]="isResumeProcessing || !resumeFile">
+        <span *ngIf="isResumeProcessing" class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>
+        {{ isResumeProcessing ? 'Traitement en cours...' : 'Lancer Resume Intelligence' }}
+      </button>
+
+      <button
+        class="btn btn-outline-primary"
+        *ngIf="resumeIntel?.githubDetected && resumeIntel?.githubAnalysisPending"
+        (click)="analyzeDetectedGithubPortfolio()"
+        [disabled]="isDetectedGithubAnalyzing">
+        <span *ngIf="isDetectedGithubAnalyzing" class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>
+        {{ isDetectedGithubAnalyzing ? 'Analyse GitHub en cours...' : 'Analyser le portfolio GitHub' }}
+      </button>
+    </div>
+
+    <div class="alert alert-info mt-3 mb-0" *ngIf="portfolioProgressMessage">
+      {{ portfolioProgressMessage }}
+    </div>
+
+    <div class="alert alert-danger mt-3 mb-0" *ngIf="portfolioError">
+      {{ portfolioError }}
+    </div>
+
+    <div class="alert alert-success mt-3 mb-0" *ngIf="portfolioSuccess">
+      {{ portfolioSuccess }}
+    </div>
+
+    <div class="portfolio-delta-board mt-3" *ngIf="resumeDelta">
+      <div class="delta-col delta-col-validated">
+        <div class="delta-col-head">Validated Skills (CV + GitHub) <span class="badge bg-success ms-1">{{ resumeDelta.validatedCount }}</span></div>
+        <div class="delta-skill" *ngFor="let s of resumeDelta.validatedSkills">
+          <label class="form-check-label d-flex align-items-center gap-2">
+            <input class="form-check-input" type="checkbox" [checked]="isPortfolioSkillSelected(s)" (change)="togglePortfolioSkill(s, $any($event.target).checked)">
+            <span>{{ s }}</span>
+          </label>
+        </div>
+        <div class="small text-muted" *ngIf="resumeDelta.validatedSkills.length === 0">Aucune skill validee.</div>
+      </div>
+
+      <div class="delta-col delta-col-claimed">
+        <div class="delta-col-head">Claimed but Unverified (CV only) <span class="badge bg-warning text-dark ms-1">{{ resumeDelta.claimedButUnverifiedCount }}</span></div>
+        <div class="delta-skill" *ngFor="let s of resumeDelta.claimedButUnverified">
+          <label class="form-check-label d-flex align-items-center gap-2">
+            <input class="form-check-input" type="checkbox" [checked]="isPortfolioSkillSelected(s)" (change)="togglePortfolioSkill(s, $any($event.target).checked)">
+            <span>{{ s }}</span>
+          </label>
+        </div>
+        <div class="small text-muted" *ngIf="resumeDelta.claimedButUnverified.length === 0">Aucune skill non verifiee.</div>
+      </div>
+
+      <div class="delta-col delta-col-hidden">
+        <div class="delta-col-head">Hidden Gems (GitHub only) <span class="badge bg-primary ms-1">{{ resumeDelta.hiddenGemsCount }}</span></div>
+        <div class="delta-skill" *ngFor="let s of resumeDelta.hiddenGems">
+          <label class="form-check-label d-flex align-items-center gap-2">
+            <input class="form-check-input" type="checkbox" [checked]="isPortfolioSkillSelected(s)" (change)="togglePortfolioSkill(s, $any($event.target).checked)">
+            <span>{{ s }}</span>
+          </label>
+        </div>
+        <div class="small text-muted" *ngIf="resumeDelta.hiddenGems.length === 0">Aucune hidden gem detectee.</div>
+      </div>
+    </div>
+
+    <div class="interview-generator-panel mt-3" *ngIf="resumeDelta">
+      <div class="d-flex justify-content-between align-items-start mb-2 gap-3 flex-wrap">
+        <div>
+          <div class="interview-title">Dynamic Interview Generator</div>
+          <div class="small text-muted">
+            Genere un script d'entretien senior pour verifier les zones "Claimed but Unverified".
+          </div>
+        </div>
+        <span class="badge interview-badge">Recruiter AI</span>
+      </div>
+
+      <div class="d-flex align-items-center gap-2 flex-wrap">
+        <label class="small text-muted" for="interviewQuestionCount">Questions</label>
+        <select
+          id="interviewQuestionCount"
+          class="form-select form-select-sm interview-count-select"
+          [(ngModel)]="selectedInterviewQuestionCount"
+          [disabled]="isInterviewGenerating">
+          <option [ngValue]="3">3</option>
+          <option [ngValue]="4">4</option>
+          <option [ngValue]="5">5</option>
+        </select>
+
+        <button
+          class="btn btn-dark"
+          (click)="startDynamicInterviewGeneration()"
+          [disabled]="isInterviewGenerating || resumeDelta.claimedButUnverifiedCount === 0">
+          <span *ngIf="isInterviewGenerating" class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>
+          {{ isInterviewGenerating ? 'Generation en cours...' : 'Generer script entretien' }}
+        </button>
+
+        <span class="small text-muted" *ngIf="resumeDelta.claimedButUnverifiedCount === 0">
+          Aucun signal non verifie pour lancer le generateur.
+        </span>
+      </div>
+
+      <div class="alert alert-info mt-3 mb-0" *ngIf="interviewInfoMessage && !interviewError">
+        {{ interviewInfoMessage }}
+      </div>
+
+      <div class="alert alert-danger mt-3 mb-0" *ngIf="interviewError">
+        {{ interviewError }}
+      </div>
+
+      <div class="interview-skeleton mt-3" *ngIf="isInterviewGenerating">
+        <div class="skeleton-row" *ngFor="let n of [1,2,3]"></div>
+      </div>
+
+      <div class="interview-script-list mt-3" *ngIf="interviewQuestions.length > 0">
+        <div class="small text-muted mb-2 d-flex align-items-center gap-2">
+          <span>{{ interviewQuestions.length }} question(s) generee(s)</span>
+          <span class="badge text-bg-warning" *ngIf="interviewJob?.fallbackUsed">Fallback intelligent</span>
+          <span class="badge text-bg-secondary" *ngIf="!interviewJob?.fallbackUsed">Groq {{ interviewJob?.model }}</span>
+        </div>
+
+        <div class="interview-script-item" *ngFor="let q of interviewQuestions; let i = index">
+          <div class="interview-script-head">
+            <span class="interview-q-index">Q{{ i + 1 }}</span>
+            <span class="interview-skill">{{ q.skill }}</span>
+          </div>
+          <p class="mb-2">{{ q.question }}</p>
+          <div class="interview-signals">
+            <span class="badge rounded-pill text-bg-light border" *ngFor="let signal of q.expectedSignals">{{ signal }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="d-flex justify-content-end mt-3" *ngIf="resumeDelta">
+      <button class="btn btn-success" [disabled]="isPortfolioApplying || selectedPortfolioSkills.size === 0" (click)="applyPortfolioEnrichment()">
+        <span *ngIf="isPortfolioApplying" class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>
+        {{ isPortfolioApplying ? 'Validation en cours...' : 'Valider l\'enrichissement' }}
+      </button>
+    </div>
+
+    <div class="behavioral-profile-panel mt-3">
+      <div class="d-flex justify-content-between align-items-start gap-3 flex-wrap mb-2">
+        <div>
+          <div class="behavioral-title">Profil Comportemental</div>
+          <div class="small text-muted">
+            Detection des soft skills implicites a partir du ton CV/GitHub, avec preuve explicable pour le recruteur.
+          </div>
+        </div>
+        <span class="badge behavioral-badge">Behavioral AI</span>
+      </div>
+
+      <div class="d-flex align-items-center gap-2 flex-wrap">
+        <button class="btn btn-dark" (click)="startBehavioralProfileAnalysis()" [disabled]="isBehavioralProfileLoading">
+          <span *ngIf="isBehavioralProfileLoading" class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>
+          {{ isBehavioralProfileLoading ? 'Analyse en cours...' : 'Analyser le profil comportemental' }}
+        </button>
+
+        <button
+          class="btn btn-outline-primary"
+          (click)="addAllBehavioralSkillsToCandidate()"
+          [disabled]="isBehavioralAttachAllLoading || (behavioralProfile?.softSkills || []).length === 0">
+          <span *ngIf="isBehavioralAttachAllLoading" class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>
+          {{ isBehavioralAttachAllLoading ? 'Ajout en cours...' : 'Ajouter toutes les soft skills' }}
+        </button>
+
+        <span class="badge text-bg-secondary" *ngIf="behavioralProfile?.totalSoftSkills !== undefined">
+          {{ behavioralProfile?.totalSoftSkills || 0 }} soft skills
+        </span>
+
+        <span class="badge text-bg-warning" *ngIf="behavioralProfileJob?.fallbackUsed">Fallback actif</span>
+      </div>
+
+      <div class="alert alert-info mt-3 mb-0" *ngIf="behavioralProfileInfoMessage && !behavioralProfileError">
+        {{ behavioralProfileInfoMessage }}
+      </div>
+
+      <div class="alert alert-danger mt-3 mb-0" *ngIf="behavioralProfileError">
+        {{ behavioralProfileError }}
+      </div>
+
+      <div class="alert alert-success mt-3 mb-0" *ngIf="behavioralAttachSuccess">
+        {{ behavioralAttachSuccess }}
+      </div>
+
+      <div class="alert alert-warning mt-3 mb-0" *ngIf="behavioralAttachError">
+        {{ behavioralAttachError }}
+      </div>
+
+      <div class="behavioral-skill-grid mt-3" *ngIf="(behavioralProfile?.softSkills || []).length > 0">
+        <div class="behavioral-skill-card" *ngFor="let s of behavioralProfile?.softSkills || []">
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <div class="behavioral-skill-name">{{ s.softSkillName }}</div>
+            <span class="badge text-bg-primary">{{ softSkillConfidencePercent(s.confidence) }}%</span>
+          </div>
+
+          <div class="progress behavioral-progress mb-2" role="progressbar" aria-label="soft skill confidence">
+            <div class="progress-bar" [style.width.%]="softSkillConfidencePercent(s.confidence)"></div>
+          </div>
+
+          <button class="btn btn-sm btn-outline-secondary" (click)="toggleSoftSkillEvidence(s.softSkillName)">
+            {{ isSoftSkillEvidenceExpanded(s.softSkillName) ? 'Masquer preuve' : 'Voir preuve' }}
+          </button>
+
+          <button
+            class="btn btn-sm btn-outline-primary ms-2"
+            (click)="addBehavioralSkillToCandidate(s.softSkillName)"
+            [disabled]="attachingBehavioralSkillNames.has(s.softSkillName) || isBehavioralSkillAlreadyInCandidate(s.softSkillName)">
+            <span *ngIf="attachingBehavioralSkillNames.has(s.softSkillName)" class="spinner-border spinner-border-sm me-1" aria-hidden="true"></span>
+            {{ isBehavioralSkillAlreadyInCandidate(s.softSkillName) ? 'Deja ajoutee' : 'Ajouter au profil' }}
+          </button>
+
+          <div class="behavioral-evidence mt-2" *ngIf="isSoftSkillEvidenceExpanded(s.softSkillName)">
+            {{ s.evidence }}
+          </div>
+        </div>
+      </div>
+
+      <div class="small text-muted mt-3" *ngIf="(behavioralProfile?.softSkills || []).length === 0 && !isBehavioralProfileLoading">
+        Aucune soft skill deduite pour le moment. Lancez l'analyse pour extraire les signaux implicites.
+      </div>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col-md-4 mb-4">
+      <div class="card info-card shadow-sm border-0 p-3 h-100">
+        <h4>Informations</h4>
+        <p class="mb-1"><strong>Email:</strong> {{ candidate?.email || 'N/A' }}</p>
+        <div class="mt-3">
+          <h5>Competences</h5>
+          <span class="badge bg-info me-1" *ngFor="let s of (candidate?.skills || [])">{{ s.name }}</span>
+          <p class="text-muted mt-2" *ngIf="(candidate?.skills || []).length === 0">Aucune competence.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-8 mb-4">
+      <div class="card analytics-card shadow-sm border-0 p-3 bg-light h-100">
+        <h4>Analyse et Statistiques (Graphe)</h4>
+        <div class="row row-cols-1 row-cols-md-3 mt-3 text-center">
+          <div class="col">
+            <div class="p-3 bg-white rounded shadow-sm">
+              <h2 class="text-success">{{ recommendations.length }}</h2>
+              <p class="mb-0 text-muted">Jobs compatibles (Top)</p>
+            </div>
+          </div>
+          <div class="col">
+            <div class="p-3 bg-white rounded shadow-sm">
+              <h2 class="text-warning">{{ topSkillsDemand.length > 0 ? topSkillsDemand[0].name : 'N/A' }}</h2>
+              <p class="mb-0 text-muted">Skill la plus demandee</p>
+            </div>
+          </div>
+          <div class="col">
+            <div class="p-3 bg-white rounded shadow-sm">
+              <h2 class="text-danger">{{ rarityScore }}%</h2>
+              <p class="mb-0 text-muted">Score de Rarete Profil</p>
+            </div>
+          </div>
+        </div>
+
+        <h5 class="mt-4">Competences Top Demandees sur le marche :</h5>
+        <ul class="list-group list-group-flush">
+          <li class="list-group-item bg-transparent d-flex justify-content-between align-items-center" *ngFor="let ts of topSkillsDemand">
+            {{ ts.name }}
+            <span class="badge bg-secondary rounded-pill">{{ ts.count }} occurences</span>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="row mt-2">
+    <div class="col-12">
+      <div class="card roadmap-card shadow-sm border-0 mb-3">
+        <div class="card-header bg-white border-bottom-0">
+          <h5 class="mb-0">Skill-Gap Roadmap (Impact Marche)</h5>
+        </div>
+        <div class="card-body">
+          <div class="alert alert-info" *ngIf="skillGapRoadmap.length === 0">
+            Aucun skill-gap prioritaire detecte pour ce profil.
+          </div>
+          <div class="d-flex flex-wrap gap-2" *ngIf="skillGapRoadmap.length > 0">
+            <div class="border rounded p-2 bg-light" *ngFor="let row of skillGapRoadmap">
+              <div class="fw-semibold text-primary">{{ row.skillName }}</div>
+              <div class="small text-muted">{{ row.supportedJobs }} jobs potentiels | impact {{ row.impactScore | number:'1.0-2' }}</div>
+              <div class="small" *ngIf="row.exampleJobs.length">Ex: {{ row.exampleJobs.join(' | ') }}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card coach-card shadow-sm border-0 mb-3">
+        <div class="card-header bg-white border-bottom-0 d-flex justify-content-between align-items-center">
+          <h5 class="mb-0">Career Path Predictor (Coaching IA)</h5>
+          <span class="badge text-bg-dark">Groq + Neo4j</span>
+        </div>
+        <div class="card-body">
+          <div class="d-flex align-items-center mb-3" *ngIf="isCareerPredictionLoading">
+            <span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>
+            <span class="small text-muted">Calcul des skills prioritaires en cours...</span>
+          </div>
+
+          <div class="alert alert-warning" *ngIf="careerPredictorError">
+            {{ careerPredictorError }}
+          </div>
+
+          <div class="d-flex flex-wrap gap-2 mb-3" *ngIf="careerPathPredictions.length > 0">
+            <div class="border rounded p-2 bg-light predictor-chip" *ngFor="let row of careerPathPredictions">
+              <div class="fw-semibold text-primary">{{ row.skillName }}</div>
+              <div class="small text-muted">
+                score {{ row.linkPredictionScore | number:'1.0-2' }}
+                | jobs {{ row.unlockableJobs }}
+                | seniors {{ row.seniorUnlockableJobs }}
+              </div>
+              <div class="small" *ngIf="row.sampleJobs.length">Ex: {{ row.sampleJobs.join(' | ') }}</div>
+            </div>
+          </div>
+
+          <div class="alert alert-info" *ngIf="!isCareerPredictionLoading && careerPathPredictions.length === 0 && !careerPredictorError">
+            Aucune prediction prioritaire detectee pour ce profil.
+          </div>
+
+          <div class="coach-box" *ngIf="isCareerCoachLoading || careerCoachMessage || coachThinkDetected">
+            <div class="d-flex align-items-center mb-2">
+              <strong>Coach IA</strong>
+              <span class="spinner-border spinner-border-sm ms-2" aria-hidden="true" *ngIf="isCareerCoachLoading"></span>
+            </div>
+
+            <div class="small text-muted mb-2" *ngIf="isCareerCoachLoading">
+              Generation du plan de coaching personalise...
+            </div>
+
+            <div class="coach-think-notice" *ngIf="!isCareerCoachLoading && coachThinkDetected">
+              <span class="coach-think-dot" aria-hidden="true"></span>
+              <span>Raisonnement interne detecte.</span>
+              <button class="btn btn-sm btn-outline-warning coach-think-btn" type="button" (click)="toggleCoachReasoning()">
+                {{ showCoachReasoning ? 'Masquer' : 'Afficher en temps reel' }}
+              </button>
+            </div>
+
+            <p class="mb-0 coach-text" *ngIf="!isCareerCoachLoading && careerCoachMessage">
+              {{ careerCoachMessage }}
+            </p>
+
+            <div class="coach-reasoning-box mt-2" *ngIf="!isCareerCoachLoading && showCoachReasoning && coachReasoning">
+              <div class="coach-reasoning-head d-flex align-items-center gap-2 mb-1">
+                <span class="badge text-bg-secondary">Reasoning</span>
+                <span class="small text-muted" *ngIf="isCoachReasoningTyping">Affichage progressif...</span>
+              </div>
+              <pre class="mb-0 coach-reasoning-text">{{ coachReasoningDisplay }}</pre>
+            </div>
+
+            <p class="mb-0 coach-text text-muted" *ngIf="!isCareerCoachLoading && !careerCoachMessage && coachThinkDetected">
+              Le message final du Coach IA est vide apres nettoyage des balises internes.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div class="card semantic-card shadow-sm border-0">
+        <div class="card-header semantic-header border-0 d-flex justify-content-between align-items-center">
+          <div>
+            <h4 class="mb-1">Recommandations Elargies (IA)</h4>
+            <p class="mb-0 small text-muted">Matching vectoriel avec seuil de pertinence >= 80% et explication skill a skill.</p>
+          </div>
+          <span class="badge text-bg-dark">{{ semanticRecommendations.length }} jobs</span>
+        </div>
+        <div class="card-body">
+          <div class="alert alert-light border" *ngIf="semanticRecommendations.length === 0">
+            Aucun match semantique pertinent trouve avec le seuil actuel.
+          </div>
+
+          <div class="semantic-job" *ngFor="let rec of semanticRecommendations">
+            <div class="semantic-job-head d-flex justify-content-between align-items-start">
+              <div>
+                <h5 class="mb-1 text-primary">{{ rec.matchedJob.title || 'Job sans titre' }}</h5>
+                <p class="mb-2 text-muted small">
+                  {{ rec.matchedJob.level || 'N/A' }} <span *ngIf="rec.matchedJob.level && rec.matchedJob.type">|</span> {{ rec.matchedJob.type || 'N/A' }}
+                </p>
+              </div>
+              <div class="semantic-score-chip" [ngClass]="semanticToneClass(rec.semanticScore)">
+                {{ asPercent(rec.semanticScore) }}% Match IA
+              </div>
+            </div>
+
+            <div class="progress semantic-progress mb-2" role="progressbar" aria-label="Semantic score">
+              <div class="progress-bar" [style.width.%]="asPercent(rec.semanticScore)"></div>
+            </div>
+
+            <div class="small text-muted mb-2">
+              Couverture semantique: {{ rec.semanticMatchedSkills }} / {{ rec.totalRequiredSkills }} skills requis
+            </div>
+
+            <div class="explain-pills">
+              <span
+                class="badge me-2 mb-2 explain-pill"
+                *ngFor="let ex of rec.explanations"
+                [ngClass]="explainToneClass(ex.similarityScore)">
+                {{ ex.requiredSkillName }} approx {{ ex.candidateSkillName }} ({{ asPercent(ex.similarityScore) }}%)
+              </span>
+            </div>
+
+            <a class="btn btn-sm btn-outline-primary" [href]="rec.matchedJob.jobLink" target="_blank" *ngIf="rec.matchedJob.jobLink">
+              Voir offre
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

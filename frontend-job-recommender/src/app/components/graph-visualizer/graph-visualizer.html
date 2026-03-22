@@ -1,0 +1,22 @@
+<div class="graph-page container mt-4">
+  <h2>Graphe des Recommandations <span *ngIf="isLoading" class="spinner-border spinner-border-sm text-primary ms-2"></span></h2>
+  <p class="text-muted" *ngIf="candidate">Aperçu pour {{ candidate.name || "Candidat " + candidateId }}</p>
+  
+  <div class="card graph-card shadow-sm mb-3 border-0">
+    <div class="card-body">
+      <div class="d-flex mb-3 align-items-center graph-legend-row">
+        <strong class="me-3">Légende :</strong>
+        <span class="badge bg-info me-2 text-dark" style="font-size: 0.9em; padding: 0.5em;"><i class="bi bi-person-circle"></i> Candidat</span>
+        <span class="badge bg-success me-2" style="font-size: 0.9em; padding: 0.5em;"><i class="bi bi-star-fill"></i> Compétence</span>
+        <span class="badge bg-warning text-dark" style="font-size: 0.9em; padding: 0.5em;"><i class="bi bi-briefcase-fill"></i> Job</span>
+      </div>
+      
+      <div class="alert alert-info text-center" *ngIf="!isLoading && recommendations.length === 0">
+        Pas de données suffisantes pour afficher un graphe.
+      </div>
+      
+      <div #graphContainer class="graph-canvas" style="width: 100%; height: 600px; background: #f8f9fa; border: 1px solid #ddd; border-radius: 8px;"></div>
+    </div>
+  </div>
+</div>
+

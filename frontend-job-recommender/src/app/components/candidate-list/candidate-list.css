@@ -1,0 +1,46 @@
+.candidate-list-page {
+	animation: fadeSlideIn 300ms ease;
+}
+
+.candidate-table-card {
+	overflow: hidden;
+}
+
+.candidate-table-card .table td,
+.candidate-table-card .table th {
+	vertical-align: middle;
+}
+
+.candidate-table-card .btn {
+	margin-bottom: 0.22rem;
+}
+
+.pagination-bar {
+	border: 1px solid #d8e4f1;
+	border-radius: 12px;
+	background: #f8fbff;
+	padding: 0.75rem 0.95rem;
+}
+
+@keyframes fadeSlideIn {
+	from {
+		opacity: 0;
+		transform: translateY(7px);
+	}
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
+}
+
+@media (max-width: 991px) {
+	.candidate-table-card {
+		overflow-x: auto;
+	}
+
+	.pagination-bar {
+		flex-direction: column;
+		align-items: flex-start !important;
+		gap: 0.6rem;
+	}
+}

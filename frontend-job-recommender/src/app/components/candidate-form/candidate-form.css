@@ -1,0 +1,38 @@
+.candidate-form-page {
+	animation: formAppear 300ms ease;
+}
+
+.candidate-form-card {
+	background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
+	border: 1px solid #dce6f2 !important;
+}
+
+.candidate-form-card .list-group {
+	border: 1px solid #d9e5f3;
+	border-radius: 12px;
+}
+
+.candidate-form-card .list-group-item:hover {
+	background: #f4f9ff;
+}
+
+.selected-skills-box {
+	border-color: #d8e4f3 !important;
+	background: linear-gradient(180deg, #f7fbff 0%, #f0f6fd 100%) !important;
+	min-height: 130px;
+}
+
+.selected-skills-box .badge {
+	background: linear-gradient(135deg, #1d4e73 0%, #2f78a2 100%) !important;
+}
+
+@keyframes formAppear {
+	from {
+		opacity: 0;
+		transform: translateY(8px);
+	}
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
+}

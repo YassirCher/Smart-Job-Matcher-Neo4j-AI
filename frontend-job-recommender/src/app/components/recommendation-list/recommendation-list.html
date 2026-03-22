@@ -1,0 +1,71 @@
+﻿<div class="recommendation-page container mt-4">
+  <h2>Recommandations</h2>
+  <p class="text-muted">Candidat ID: {{ candidateId }}</p>
+
+  <div class="row mb-3">
+    <div class="col-md-6">
+      <div class="card rec-side-card shadow-sm border-0 h-100">
+        <div class="card-header bg-white border-bottom-0">
+          <h5 class="mb-0">Comparaison Lexical vs Semantic</h5>
+        </div>
+        <div class="card-body">
+          <div class="text-muted" *ngIf="comparisonRows.length === 0">Aucune comparaison disponible.</div>
+          <div class="small border rounded p-2 mb-2" *ngFor="let row of comparisonRows">
+            <div class="fw-semibold text-primary">{{ row.title }}</div>
+            <div>Lexical: {{ row.lexicalScore | number:'1.0-2' }}% | Semantic: {{ row.semanticScore | number:'1.0-2' }}%</div>
+            <div [ngClass]="row.delta >= 0 ? 'text-success' : 'text-danger'">Delta: {{ row.delta | number:'1.0-2' }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-6">
+      <div class="card rec-side-card shadow-sm border-0 h-100">
+        <div class="card-header bg-white border-bottom-0">
+          <h5 class="mb-0">Counterfactual (Skills a Ajouter)</h5>
+        </div>
+        <div class="card-body">
+          <div class="text-muted" *ngIf="counterfactualRows.length === 0">Aucune action counterfactual proposee.</div>
+          <div class="small border rounded p-2 mb-2 bg-light" *ngFor="let row of counterfactualRows">
+            <div class="fw-semibold">{{ row.skillName }}</div>
+            <div>{{ row.unlockableJobs }} jobs debloquables | Priorite {{ row.priorityScore | number:'1.0-2' }}</div>
+            <div *ngIf="row.exampleJobs.length">Ex: {{ row.exampleJobs.join(' | ') }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col-md-4 mb-3" *ngFor="let rec of recommendations">
+      <div class="card recommendation-item-card h-100 shadow-sm border-0">
+        <div class="card-body">
+          <h5 class="card-title text-primary">{{ rec?.job?.title || 'Titre non disponible' }}</h5>        
+          <h6 class="card-subtitle mb-2 text-muted">{{ rec?.job?.level }} <span *ngIf="rec?.job?.level && rec?.job?.type">|</span> {{ rec?.job?.type }}</h6>
+          
+          <p class="mb-1"><strong>Score:</strong> <span class="badge bg-success">{{ rec?.score | number:'1.0-0' }}%</span></p>                                            
+          
+          <p class="mb-1 text-muted" style="font-size: 0.9em;">
+            Compétences: {{ rec?.matchingSkills }} / {{ rec?.totalSkills }}
+          </p>
+          
+          <div *ngIf="rec?.matchedSkillsList?.length > 0" class="mt-2">
+            <p class="mb-1" style="font-size: 0.85em; font-weight: 500;">Compétences validées :</p>
+            <div>
+              <span class="badge matched-skill-pill bg-info text-dark me-1 mb-1" *ngFor="let skill of rec.matchedSkillsList" style="font-size: 0.75em;">
+                {{ skill }}
+              </span>
+            </div>
+          </div>
+
+        </div>
+        <div class="card-footer bg-transparent border-0 text-end">
+          <a class="btn btn-sm btn-outline-primary" [href]="rec?.job?.jobLink" target="_blank" *ngIf="rec?.job?.jobLink">Voir offre</a>
+        </div>
+      </div>
+    </div>
+    <div *ngIf="recommendations.length === 0" class="col-12">
+      <div class="alert alert-info">Aucune recommandation trouvée.</div>       
+    </div>
+  </div>
+</div>

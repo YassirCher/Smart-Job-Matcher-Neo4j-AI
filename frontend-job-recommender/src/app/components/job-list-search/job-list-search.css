@@ -1,0 +1,71 @@
+.job-list-page {
+	animation: riseIn 300ms ease;
+}
+
+.notice-banner {
+	border: 1px solid #cfe8da;
+	background: linear-gradient(180deg, #f4fcf7 0%, #edfaf2 100%);
+	border-radius: 12px;
+}
+
+.filter-card {
+	background: linear-gradient(180deg, #ffffff 0%, #f5f9ff 100%);
+	border: 1px solid #d8e4f3 !important;
+}
+
+.job-item-card {
+	overflow: hidden;
+	transition: transform 180ms ease, box-shadow 180ms ease;
+}
+
+.job-item-card:hover {
+	transform: translateY(-3px);
+	box-shadow: 0 14px 28px rgba(19, 52, 84, 0.11) !important;
+}
+
+.job-item-card .card-title {
+	line-height: 1.25;
+	margin-bottom: 0.55rem;
+}
+
+.job-item-card .badge.bg-secondary {
+	background: #eef3fa !important;
+	color: #2b4967;
+	border: 1px solid #d1deef;
+	font-weight: 700;
+	margin-bottom: 0.35rem;
+}
+
+.job-item-card .card-footer {
+	display: flex;
+	justify-content: flex-end;
+	gap: 0.45rem;
+	flex-wrap: wrap;
+	padding-top: 0;
+}
+
+.pagination-bar {
+	border: 1px solid #d8e4f1;
+	border-radius: 12px;
+	background: #f8fbff;
+	padding: 0.75rem 0.95rem;
+}
+
+@keyframes riseIn {
+	from {
+		opacity: 0;
+		transform: translateY(8px);
+	}
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
+}
+
+@media (max-width: 991px) {
+	.pagination-bar {
+		flex-direction: column;
+		align-items: flex-start !important;
+		gap: 0.6rem;
+	}
+}

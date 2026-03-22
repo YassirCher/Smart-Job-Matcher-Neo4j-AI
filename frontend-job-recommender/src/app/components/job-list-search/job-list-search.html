@@ -1,0 +1,58 @@
+<div class="job-list-page container mt-4">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h2>Listes des Jobs</h2> <a routerLink="/jobs/new" class="btn btn-primary">+ Nouveau Job</a>
+  </div>
+
+  <div class="alert alert-success notice-banner d-flex justify-content-between align-items-center" *ngIf="noticeMessage">
+    <span>{{ noticeMessage }}</span>
+    <button class="btn btn-sm btn-outline-success" type="button" (click)="dismissNotice()">Fermer</button>
+  </div>
+  
+  <div class="card filter-card shadow-sm p-3 mb-3">
+    <form class="row g-2" (ngSubmit)="applyFilters()">
+      <div class="col-md-4">
+        <input type="text" class="form-control" [(ngModel)]="filters.title" name="title" placeholder="Filtrer par titre du poste">
+      </div>
+      <div class="col-md-3">
+        <input type="text" class="form-control" [(ngModel)]="filters.level" name="level" placeholder="Filtrer par niveau">
+      </div>
+      <div class="col-md-3">
+        <input type="text" class="form-control" [(ngModel)]="filters.skill" name="skill" placeholder="Filtrer par compétence requise">
+      </div>
+      <div class="col-md-2 d-flex gap-2">
+        <button type="submit" class="btn btn-primary w-100">Filtrer</button>
+        <button type="button" class="btn btn-outline-secondary w-100" (click)="resetFilters()">Reset</button>
+      </div>
+    </form>
+  </div>
+
+  <div class="row">
+    <div class="col-md-4 mb-3" *ngFor="let job of jobs">
+      <div class="card job-item-card h-100 shadow-sm border-0">
+        <div class="card-body">
+          <h5 class="card-title text-primary">{{ job.title || 'Offre sans titre' }}</h5>
+          <h6 class="card-subtitle mb-2 text-muted">{{ job.level || 'Non spécifié' }} | {{ job.type || 'Non spécifié' }} <span *ngIf="job.companyName">- {{ job.companyName }}</span></h6>
+          <p class="mb-2 small text-muted" *ngIf="job.locationName">Localisation: {{ job.locationName }}</p>
+          <div>
+            <span class="badge bg-secondary me-1" *ngFor="let s of job?.skills">{{ s }}</span>
+          </div>
+        </div>
+        <div class="card-footer bg-transparent border-0 text-end">
+          <a class="btn btn-sm btn-primary" [routerLink]="['/jobs/edit']" [queryParams]="{ jobLink: job.jobLink }">Modifier</a>
+          <a class="btn btn-sm btn-outline-primary ms-2" [href]="job.jobLink" target="_blank" *ngIf="job.jobLink">Voir offre</a>
+          <button class="btn btn-sm btn-outline-danger ms-2" (click)="deleteJob(job.jobLink)">Supprimer</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <p class="text-center text-muted py-3" *ngIf="jobs.length === 0">Aucune offre disponible.</p>
+
+  <div class="pagination-bar d-flex justify-content-between align-items-center mt-3 mb-5">
+    <span>Page {{ page + 1 }} sur {{ totalPages }}</span>
+    <div>
+      <button class="btn btn-outline-primary btn-sm me-2" (click)="prevPage()" [disabled]="page === 0">Précédent</button>
+      <button class="btn btn-outline-primary btn-sm" (click)="nextPage()" [disabled]="page >= totalPages - 1">Suivant</button>
+    </div>
+  </div>
+</div>
+

@@ -1,0 +1,151 @@
+<div class="job-form-page container mt-4">
+  <div class="job-form-header mb-3">
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
+      <h2 class="mb-0">{{ isEditMode ? 'Modifier le Job' : 'Créer un Job' }}</h2>
+      <span class="badge form-mode-badge" [ngClass]="isEditMode ? 'editing' : 'creating'">
+        {{ isEditMode ? 'Mode édition' : 'Nouveau job' }}
+      </span>
+    </div>
+    <p class="text-muted mt-2 mb-0">Interface guidée pour saisir proprement l'offre, avec assistance IA et validation avant enregistrement.</p>
+  </div>
+
+  <div class="alert alert-danger py-2 mb-3" *ngIf="saveError">{{ saveError }}</div>
+
+  <div class="card job-form-card p-4 shadow-sm border-0">
+    <div class="magic-fill-box mb-4">
+      <div class="d-flex justify-content-between align-items-center mb-2">
+        <h5 class="mb-0">Magic Fill - Smart Job Creator</h5>
+        <span class="badge text-bg-info">IA assistée</span>
+      </div>
+      <p class="small text-muted mb-2">Collez une description de poste brute. L'IA propose un pré-remplissage explicable, puis vous gardez la main sur chaque champ.</p>
+      <textarea class="form-control mb-2" rows="6" [(ngModel)]="aiRawText" placeholder="Ex: We are hiring a Senior Data Engineer..." [disabled]="isMagicFilling"></textarea>
+      <div class="d-flex align-items-center gap-2 mb-2">
+        <button class="btn btn-primary" (click)="magicFill()" [disabled]="isMagicFilling">
+          <span *ngIf="!isMagicFilling">Lancer le parsing IA</span>
+          <span *ngIf="isMagicFilling" class="d-inline-flex align-items-center gap-2">
+            <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+            Parsing en cours...
+          </span>
+        </button>
+      </div>
+      <div class="alert alert-warning py-2" *ngIf="magicFillWarnings.length > 0">
+        <div *ngFor="let warning of magicFillWarnings">{{ warning }}</div>
+      </div>
+      <div class="alert alert-danger py-2" *ngIf="magicFillError">{{ magicFillError }}</div>
+    </div>
+
+    <div class="mb-3">
+      <label class="form-label">Lien de l'offre</label>
+      <input type="text" class="form-control" [(ngModel)]="job.jobLink" placeholder="https://example.com/job/123">
+      <div class="evidence-hint" *ngIf="getEvidence('jobLink')">Preuve IA: "{{ getEvidence('jobLink') }}"</div>
+    </div>
+    <div class="mb-3">
+      <label class="form-label">Titre</label>
+      <input type="text" class="form-control" [(ngModel)]="job.title" placeholder="Data Scientist">
+      <div class="evidence-hint" *ngIf="getEvidence('title')">Preuve IA: "{{ getEvidence('title') }}"</div>
+    </div>
+    <div class="mb-3">
+      <label class="form-label">Type</label>
+      <input type="text" class="form-control" [(ngModel)]="job.type" placeholder="Full-time">
+      <div class="evidence-hint" *ngIf="getEvidence('type')">Preuve IA: "{{ getEvidence('type') }}"</div>
+    </div>
+    <div class="mb-3">
+      <label class="form-label">Niveau</label>
+      <input type="text" class="form-control" [(ngModel)]="job.level" placeholder="Senior">
+      <div class="evidence-hint" *ngIf="getEvidence('level')">Preuve IA: "{{ getEvidence('level') }}"</div>
+    </div>
+
+    <div class="mb-3 position-relative">
+      <label class="form-label">Company (recherche dynamique)</label>
+      <div class="input-group">
+        <input type="text" id="companySearchInput" class="form-control" placeholder="Rechercher ou taper une company..."
+               [(ngModel)]="searchCompanyText"
+               (ngModelChange)="onCompanyInputChange()"
+               (focus)="onCompanyInputFocus()"
+           (keydown.enter)="addCompanyOnEnter($event)">
+        <button class="btn btn-outline-secondary" type="button" (click)="addCompanyOnEnter($event)">Sélectionner</button>
+      </div>
+      <div class="small text-muted mt-1" *ngIf="isSearchingCompanies">Recherche en cours...</div>
+      <ul class="list-group position-absolute w-100 mt-1 shadow suggestion-list" style="z-index: 1000; max-height: 180px; overflow-y: auto;" *ngIf="filteredCompanies.length > 0">
+        <li class="list-group-item list-group-item-action d-flex justify-content-between align-items-center" *ngFor="let c of filteredCompanies" (mousedown)="$event.preventDefault(); selectCompany(c)">
+          {{ c.name }}
+          <span class="text-primary small">Choisir</span>
+        </li>
+      </ul>
+      <div class="mt-2" *ngIf="selectedCompany">
+        <span class="badge bg-primary p-2">
+          {{ selectedCompany.name }}
+          <button type="button" class="btn-close btn-close-white ms-2" style="font-size: 0.6rem; vertical-align: middle;" (click)="selectedCompany = null; searchCompanyText = ''"></button>
+        </span>
+      </div>
+      <div class="evidence-hint" *ngIf="getEvidence('company.name')">Preuve IA: "{{ getEvidence('company.name') }}"</div>
+    </div>
+
+    <div class="mb-3 position-relative">
+      <label class="form-label">Location (recherche dynamique)</label>
+      <div class="input-group">
+        <input type="text" id="locationSearchInput" class="form-control" placeholder="Rechercher ou taper une location..."
+               [(ngModel)]="searchLocationText"
+               (ngModelChange)="onLocationInputChange()"
+               (focus)="onLocationInputFocus()"
+           (keydown.enter)="addLocationOnEnter($event)">
+        <button class="btn btn-outline-secondary" type="button" (click)="addLocationOnEnter($event)">Sélectionner</button>
+      </div>
+      <div class="small text-muted mt-1" *ngIf="isSearchingLocations">Recherche en cours...</div>
+      <ul class="list-group position-absolute w-100 mt-1 shadow suggestion-list" style="z-index: 1000; max-height: 180px; overflow-y: auto;" *ngIf="filteredLocations.length > 0">
+        <li class="list-group-item list-group-item-action d-flex justify-content-between align-items-center" *ngFor="let l of filteredLocations" (mousedown)="$event.preventDefault(); selectLocation(l)">
+          {{ l.name }}
+          <span class="text-primary small">Choisir</span>
+        </li>
+      </ul>
+      <div class="mt-2" *ngIf="selectedLocation">
+        <span class="badge bg-success p-2">
+          {{ selectedLocation.name }}
+          <button type="button" class="btn-close btn-close-white ms-2" style="font-size: 0.6rem; vertical-align: middle;" (click)="selectedLocation = null; searchLocationText = ''"></button>
+        </span>
+      </div>
+      <div class="evidence-hint" *ngIf="getEvidence('location.name')">Preuve IA: "{{ getEvidence('location.name') }}"</div>
+    </div>
+
+    <div class="mb-3 position-relative">
+      <label class="form-label">Skills requis (recherche dynamique)</label>
+      <div class="input-group">
+        <input type="text" id="jobSkillSearchInput" class="form-control" placeholder="Rechercher ou taper des skills..."
+               [(ngModel)]="searchSkillText"
+               (ngModelChange)="onSkillInputChange()"
+               (focus)="onSkillInputFocus()"
+           (keydown.enter)="addSkillOnEnter($event)">
+        <button class="btn btn-outline-secondary" type="button" (click)="addSkillOnEnter($event)">Ajouter</button>
+      </div>
+      <div class="small text-muted mt-1" *ngIf="isSearchingSkills">Recherche en cours...</div>
+      <ul class="list-group position-absolute w-100 mt-1 shadow suggestion-list" style="z-index: 1000; max-height: 180px; overflow-y: auto;" *ngIf="filteredSkills.length > 0">
+        <li class="list-group-item list-group-item-action d-flex justify-content-between align-items-center" *ngFor="let s of filteredSkills" (mousedown)="$event.preventDefault(); selectSkill(s)">
+          {{ s.name }}
+          <span class="text-primary small">Ajouter</span>
+        </li>
+      </ul>
+      <div class="selected-skill-box mt-2 border rounded p-2 bg-light">
+        <p class="small text-muted mb-1" *ngIf="selectedSkills.length === 0">Aucun skill requis sélectionné.</p>
+        <span class="badge bg-dark text-white me-2 mb-2 p-2" *ngFor="let s of selectedSkills; let i = index">
+          {{ s.name }}
+          <button type="button" class="btn-close btn-close-white ms-2" style="font-size: 0.6rem; vertical-align: middle;" (click)="selectedSkills.splice(i, 1)"></button>
+        </span>
+        <div class="small text-muted" *ngFor="let s of selectedSkills">
+          <span *ngIf="getSkillEvidence(s.name)">ⓘ {{ s.name }} - preuve: "{{ getSkillEvidence(s.name) }}"</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="form-actions d-flex flex-wrap gap-2 mt-2">
+      <button class="btn btn-outline-secondary" type="button" [routerLink]="['/jobs']">Annuler</button>
+      <button class="btn btn-success" (click)="save()" [disabled]="isSaving">
+        <span *ngIf="!isSaving">{{ isEditMode ? 'Mettre à jour le Job' : 'Enregistrer le Job' }}</span>
+        <span *ngIf="isSaving" class="d-inline-flex align-items-center gap-2">
+          <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+          Enregistrement...
+        </span>
+      </button>
+    </div>
+  </div>
+</div>
+
